@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+		<title>Hexagon Map</title>
+		<style>
+		body {
+			background-color: #cccccc;
+		}
+		div.map {
+			position:relative;
+			width: 670px;
+			height: 650px;
+			left: 20px;
+			top: 20px;		
+		}
+		div.hex_white {
+			background: url("images/hex_white.png") top left no-repeat;
+	    width: 60px;
+      height: 40px;
+      font-size:8px;
+		}
+		div.hex_white:hover {
+			background: url("images/hex_blue.png") top left no-repeat;
+	    width: 60px;
+      height: 40px;
+      font-size:8px;
+		}
+		div.hex_green {
+			background: url("images/hex_green.png") top left no-repeat;
+	    width: 60px;
+      height: 40px;
+      font-size:8px;
+		}
+		div.hex_green:hover {
+			background: url("images/hex_white.png") top left no-repeat;
+	    width: 60px;
+      height: 40px;
+      font-size:8px;
+		}
+		div.hex_blue {
+			background: url("images/hex_blue.png") top left no-repeat;
+	    width: 60px;
+      height: 40px;
+      font-size:8px;
+		}
+		div.hex_tree {
+			position:relative;
+			background: url("images/hex_tree.png") top left no-repeat;
+	    width: 60px;
+      height: 60px;
+      top:-20px;
+      font-size:8px;
+		}
+		</style>
+		<script>
+		
+		// function found on developerfusion.com
+		function MultiDimensionalArray(iRows,iCols) {
+			var i;
+			var j;
+			var a = new Array(iRows);
+			for (i=0; i < iRows; i++) {
+				a[i] = new Array(iCols);
+				for (j=0; j < iCols; j++) {
+					a[i][j] = "";
+				}
+			}
+			return(a);
+		} 
+
+		// Setup Hexagon Map
+		var mapsize_x = 8;
+		var mapsize_y = 8;
+		var mapArray = MultiDimensionalArray(mapsize_x,mapsize_y);
+		for (x=0; x  < mapsize_x; x++) {
+			for (y=0; y < mapsize_y; y++) {
+				mapArray[x][y] = "hex_green";
+			}
+		}
+		mapArray[3][0] = "hex_tree";
+		mapArray[3][1] = "hex_tree";
+		mapArray[3][2] = "hex_tree";
+		mapArray[3][3] = "hex_tree";
+		mapArray[2][4] = "hex_tree";
+		mapArray[1][5] = "hex_tree";
+		mapArray[3][7] = "hex_tree";
+		mapArray[4][6] = "hex_tree";
+		mapArray[5][5] = "hex_tree";
+
+		// Draw the map of Hexagons into the div map
+		function draw_map() {
+			hex_tiles = "";
+			row_type = 1;
+			offset=-((mapsize_x/2)*40);
+			z_index=mapsize_x;
+			for (x=0; x < mapsize_x; x++) {
+				for (y=0; y < mapsize_y; y++) {
+					hex_x = (x * 43)+(y*43);
+					hex_y = (x * -20)+(y*19)-offset ;
+					hex_tiles +='<div id="'+ x + '-' + y +'" style="position:absolute;z-index:'+z_index+';left:' + hex_x + 'px;top:' + hex_y + 'px;">';
+					hex_tiles +='<div id="hex_' + x + '_' + y + '" class="' + mapArray[x][y] + '" onclick="toggle_hex('+x+','+y+');">';
+					hex_tiles +='<span id="hex_coords_' + x + '_' + y + '" style="position:absolute;left:24px;top:15px;">'+x+','+y+'</span>';
+					hex_tiles +='</div></div>';
+				}
+				z_index--;
+			}
+			document.getElementById('map').innerHTML += hex_tiles;
+		}
+
+		function toggle_hex(x, y) {
+			if(mapArray[x][y]=='hex_tree') {
+				document.getElementById('hex_'+ x +'_' + y).className='hex_green';
+				mapArray[x][y]='hex_green';
+			} else {
+				document.getElementById('hex_'+ x +'_' + y).className='hex_tree';
+				mapArray[x][y]='hex_tree';
+			}
+		}
+		
+		function hex_accessible(x,y) {
+			if(mapArray[x] == undefined) return false;
+			if(mapArray[x][y] == undefined) return false;
+			if(mapArray[x][y] == 'hex_tree') return false;
+			
+			return true;
+		}
+		
+		function hex_distance(x1,y1,x2,y2) {
+			dx = Math.abs(x1-x2);
+			dy = Math.abs(y2-y1);
+			return Math.sqrt((dx*dx) + (dy*dy));
+			//dx = Math.abs(x1-x2);
+			//dy = Math.abs(y1-y2);
+			//return dx + dy;
+		}
+		
+		function remove_path() {
+			for (x=0; x  < mapsize_x; x++) {
+				for (y=0; y < mapsize_y; y++) {
+					if(document.getElementById('hex_'+ x +'_' + y).className == 'hex_blue'){
+						document.getElementById('hex_'+ x +'_' + y).className='hex_green';
+					}
+				}
+			}			
+		}
+		
+		// A* Pathfinding with Manhatan Heuristics for Hexagons.
+		function path(start_x, start_y, end_x, end_y) {
+			// Check cases path is impossible from the start.
+			var error=0;
+			if(start_x == end_x && start_y == end_y) error=1;
+			if(!hex_accessible(start_x,start_y)) error=1;
+			if(!hex_accessible(end_x,end_y)) error=1;
+			if(error==1) {
+				alert('Path is impossible to create.');
+				return false;
+			}
+			
+			// Init
+			var openlist = new Array(mapsize_x*mapsize_y+2);
+			var openlist_x = new Array(mapsize_x);
+			var openlist_y = new Array(mapsize_y);
+			var statelist = MultiDimensionalArray(mapsize_x+1,mapsize_y+1); // current open or closed state
+			var openlist_g = MultiDimensionalArray(mapsize_x+1,mapsize_y+1);
+			var openlist_f = MultiDimensionalArray(mapsize_x+1,mapsize_y+1);
+			var openlist_h = MultiDimensionalArray(mapsize_x+1,mapsize_y+1);
+			var parent_x = MultiDimensionalArray(mapsize_x+1,mapsize_y+1);
+			var parent_y = MultiDimensionalArray(mapsize_x+1,mapsize_y+1);
+			var path = MultiDimensionalArray(mapsize_x*mapsize_y+2,2);
+
+			var select_x = 0;
+			var select_y = 0;
+			var node_x = 0;
+			var node_y = 0;
+			var counter = 1; // Openlist_ID counter
+			var selected_id = 0; // Actual Openlist ID
+			
+			// Add start coordinates to openlist.
+			openlist[1] = true;
+			openlist_x[1] = start_x;
+			openlist_y[1] = start_y;
+			openlist_f[start_x][start_y] = 0;
+			openlist_h[start_x][start_y] = 0;
+			openlist_g[start_x][start_y] = 0;
+			statelist[start_x][start_y] = true; 
+			
+			// Try to find the path until the target coordinate is found
+			while (statelist[end_x][end_y] != true) {
+				set_first = true;
+				// Find lowest F in openlist
+				for (var i in openlist) {
+					if(openlist[i] == true){
+						select_x = openlist_x[i]; 
+						select_y = openlist_y[i]; 
+						if(set_first == true) {
+							lowest_found = openlist_f[select_x][select_y];
+							set_first = false;
+						}
+						if (openlist_f[select_x][select_y] <= lowest_found) {
+							lowest_found = openlist_f[select_x][select_y];
+							lowest_x = openlist_x[i];
+							lowest_y = openlist_y[i];
+							selected_id = i;
+						}
+					}
+				}
+				if(set_first==true) {
+					// open_list is empty
+					alert('No possible route can be found.');
+					return false;
+				}
+  			// add it lowest F as closed to the statelist and remove from openlist
+				statelist[lowest_x][lowest_y] = 2;
+				openlist[selected_id]= false;
+				// Add connected nodes to the openlist
+				for(i=1;i<7;i++) {
+					// Run node update for 6 neighbouring tiles.
+					switch(i){
+						case 1:
+							node_x = lowest_x-1;
+							node_y = lowest_y;						
+						break;
+						case 2:
+							node_x = lowest_x;
+							node_y = lowest_y-1;						
+						break;
+					  case 3:
+							node_x = lowest_x+1;
+							node_y = lowest_y-1;						
+						break;
+						case 4:
+							node_x = lowest_x+1;
+							node_y = lowest_y;						
+						break;
+						case 5:
+							node_x = lowest_x;
+							node_y = lowest_y+1;
+						break;
+						case 6:
+							node_x = lowest_x-1;
+							node_y = lowest_y+1;
+						break;
+					}
+				  if (hex_accessible([node_x],[node_y])) {
+					  if(statelist[node_x][node_y] == true) {
+					  	if(openlist_g[node_x][node_y] < openlist_g[lowest_x][lowest_y]) {
+					  		parent_x[lowest_x][lowest_y] = node_x;
+							  parent_y[lowest_x][lowest_y] = node_y;
+							  openlist_g[lowest_x][lowest_y] = openlist_g[node_x][node_y] + 10;
+							  openlist_f[lowest_x][lowest_y] = openlist_g[lowest_x][lowest_y] + openlist_h[lowest_x][lowest_y];
+						  }
+					  } else if (statelist[node_x][node_y] == 2) {
+						  // its on closed list do nothing.
+					  } else {
+						  counter++;
+						  // add to open list
+						  openlist[counter] = true;
+						  openlist_x[counter] = node_x;
+						  openlist_y[counter] = node_y;
+						  statelist[node_x][node_y] = true;
+						  // Set parent
+						  parent_x[node_x][node_y] = lowest_x;
+						  parent_y[node_x][node_y] = lowest_y;
+						  // update H , G and F
+						  var ydist = end_y - node_y;
+						  if ( ydist < 0 ) ydist = ydist*-1;
+						  var xdist = end_x - node_x;
+						  if ( xdist < 0 ) xdist = xdist*-1;		
+						  openlist_h[node_x][node_y] = hex_distance(node_x,node_y,end_x,end_y) * 10;
+						  openlist_g[node_x][node_y] = openlist_g[lowest_x][lowest_y] + 10;
+						  openlist_f[node_x][node_y] = openlist_g[node_x][node_y] + openlist_h[node_x][node_y];
+						}
+				  }
+				}
+			}
+			
+			// Get Path
+			temp_x=end_x;
+			temp_y=end_y;
+			counter = 0;
+			while(temp_x != start_x || temp_y != start_y) {
+				counter++;
+				path[counter][1] = temp_x;
+				path[counter][2] = temp_y;
+				temp_x = parent_x[path[counter][1]][path[counter][2]];
+				temp_y = parent_y[path[counter][1]][path[counter][2]];
+			}
+			counter++;
+			path[counter][1] = start_x;
+			path[counter][2] = start_y;
+			
+			// Draw path.
+			while(counter!=0) {
+				document.getElementById('hex_' + path[counter][1] + '_' + path[counter][2]).className = 'hex_blue';
+				counter--;
+			}
+		}		
+		</script>
+	</head>
+	<body>
+
+	<div id="ads" style="float:right;">
+		<script type="text/javascript"><!--
+		google_ad_client = "ca-pub-8395713034831171";
+		/* Van Reijmersdal Sidebar v3 */
+		google_ad_slot = "7042070246";
+		google_ad_width = 125;
+		google_ad_height = 125;
+		//-->
+		</script>
+		<script type="text/javascript" src="Hexagon%20Map_files/show_ads.js">
+		</script><ins style="display:inline-table;border:none;height:125px;margin:0;padding:0;position:relative;visibility:visible;width:125px"><ins id="aswift_0_anchor" style="display:block;border:none;height:125px;margin:0;padding:0;position:relative;visibility:visible;width:125px"><iframe allowtransparency="true" hspace="0" marginwidth="0" marginheight="0" onload="var i=this.id,s=window.google_iframe_oncopy,H=s&amp;&amp;s.handlers,h=H&amp;&amp;H[i],w=this.contentWindow,d;try{d=w.document}catch(e){}if(h&amp;&amp;d&amp;&amp;(!d.body||!d.body.firstChild)){if(h.call){i+='.call';setTimeout(h,0)}else if(h.match){i+='.nav';w.location.replace(h)}s.log&amp;&amp;s.log.push(i)}" vspace="0" id="aswift_0" name="aswift_0" style="left: 0pt; position: absolute; top: 0pt;" frameborder="0" height="125" scrolling="no" width="125"></iframe></ins></ins>
+	</div>
+
+
+
+	<h3>Javascript implementation of A* Pathfinding on isometric Hexagons</h3>
+Click on a field to toggle grass and trees. See my blog <a href="http://www.vanreijmersdal.nl/?p=54">post</a> for more information.<br>
+	<button onclick="javascript:remove_path();path(document.getElementById('x1').selectedIndex,document.getElementById('y1').selectedIndex,document.getElementById('x2').selectedIndex,document.getElementById('y2').selectedIndex);">Draw Path</button>
+	X1:<select id="x1">
+		<option selected="selected">0</option>
+		<option>1</option>
+		<option>2</option>
+		<option>3</option>
+		<option>4</option>
+		<option>5</option>
+		<option>6</option>
+		<option>7</option>
+	</select>
+	Y1:<select id="y1">
+		<option selected="selected">0</option>
+		<option>1</option>
+		<option>2</option>
+		<option>3</option>
+		<option>4</option>
+		<option>5</option>
+		<option>6</option>
+		<option>7</option>
+	</select>
+	X2:<select id="x2">
+		<option>0</option>
+		<option>1</option>
+		<option>2</option>
+		<option>3</option>
+		<option>4</option>
+		<option>5</option>
+		<option>6</option>
+		<option selected="selected">7</option>
+	</select>
+	Y2:<select id="y2">
+		<option>0</option>
+		<option>1</option>
+		<option>2</option>
+		<option>3</option>
+		<option>4</option>
+		<option>5</option>
+		<option>6</option>
+		<option selected="selected">7</option>
+	</select>
+		
+	<div id="map" class="map">
+	<div id="0-0" style="position:absolute;z-index:8;left:0px;top:160px;"><div id="hex_0_0" class="hex_green" onclick="toggle_hex(0,0);"><span id="hex_coords_0_0" style="position:absolute;left:24px;top:15px;">0,0</span></div></div><div id="0-1" style="position:absolute;z-index:8;left:43px;top:179px;"><div id="hex_0_1" class="hex_green" onclick="toggle_hex(0,1);"><span id="hex_coords_0_1" style="position:absolute;left:24px;top:15px;">0,1</span></div></div><div id="0-2" style="position:absolute;z-index:8;left:86px;top:198px;"><div id="hex_0_2" class="hex_green" onclick="toggle_hex(0,2);"><span id="hex_coords_0_2" style="position:absolute;left:24px;top:15px;">0,2</span></div></div><div id="0-3" style="position:absolute;z-index:8;left:129px;top:217px;"><div id="hex_0_3" class="hex_green" onclick="toggle_hex(0,3);"><span id="hex_coords_0_3" style="position:absolute;left:24px;top:15px;">0,3</span></div></div><div id="0-4" style="position:absolute;z-index:8;left:172px;top:236px;"><div id="hex_0_4" class="hex_green" onclick="toggle_hex(0,4);"><span id="hex_coords_0_4" style="position:absolute;left:24px;top:15px;">0,4</span></div></div><div id="0-5" style="position:absolute;z-index:8;left:215px;top:255px;"><div id="hex_0_5" class="hex_green" onclick="toggle_hex(0,5);"><span id="hex_coords_0_5" style="position:absolute;left:24px;top:15px;">0,5</span></div></div><div id="0-6" style="position:absolute;z-index:8;left:258px;top:274px;"><div id="hex_0_6" class="hex_green" onclick="toggle_hex(0,6);"><span id="hex_coords_0_6" style="position:absolute;left:24px;top:15px;">0,6</span></div></div><div id="0-7" style="position:absolute;z-index:8;left:301px;top:293px;"><div id="hex_0_7" class="hex_green" onclick="toggle_hex(0,7);"><span id="hex_coords_0_7" style="position:absolute;left:24px;top:15px;">0,7</span></div></div><div id="1-0" style="position:absolute;z-index:7;left:43px;top:140px;"><div id="hex_1_0" class="hex_green" onclick="toggle_hex(1,0);"><span id="hex_coords_1_0" style="position:absolute;left:24px;top:15px;">1,0</span></div></div><div id="1-1" style="position:absolute;z-index:7;left:86px;top:159px;"><div id="hex_1_1" class="hex_green" onclick="toggle_hex(1,1);"><span id="hex_coords_1_1" style="position:absolute;left:24px;top:15px;">1,1</span></div></div><div id="1-2" style="position:absolute;z-index:7;left:129px;top:178px;"><div id="hex_1_2" class="hex_green" onclick="toggle_hex(1,2);"><span id="hex_coords_1_2" style="position:absolute;left:24px;top:15px;">1,2</span></div></div><div id="1-3" style="position:absolute;z-index:7;left:172px;top:197px;"><div id="hex_1_3" class="hex_green" onclick="toggle_hex(1,3);"><span id="hex_coords_1_3" style="position:absolute;left:24px;top:15px;">1,3</span></div></div><div id="1-4" style="position:absolute;z-index:7;left:215px;top:216px;"><div id="hex_1_4" class="hex_green" onclick="toggle_hex(1,4);"><span id="hex_coords_1_4" style="position:absolute;left:24px;top:15px;">1,4</span></div></div><div id="1-5" style="position:absolute;z-index:7;left:258px;top:235px;"><div id="hex_1_5" class="hex_tree" onclick="toggle_hex(1,5);"><span id="hex_coords_1_5" style="position:absolute;left:24px;top:15px;">1,5</span></div></div><div id="1-6" style="position:absolute;z-index:7;left:301px;top:254px;"><div id="hex_1_6" class="hex_green" onclick="toggle_hex(1,6);"><span id="hex_coords_1_6" style="position:absolute;left:24px;top:15px;">1,6</span></div></div><div id="1-7" style="position:absolute;z-index:7;left:344px;top:273px;"><div id="hex_1_7" class="hex_green" onclick="toggle_hex(1,7);"><span id="hex_coords_1_7" style="position:absolute;left:24px;top:15px;">1,7</span></div></div><div id="2-0" style="position:absolute;z-index:6;left:86px;top:120px;"><div id="hex_2_0" class="hex_green" onclick="toggle_hex(2,0);"><span id="hex_coords_2_0" style="position:absolute;left:24px;top:15px;">2,0</span></div></div><div id="2-1" style="position:absolute;z-index:6;left:129px;top:139px;"><div id="hex_2_1" class="hex_green" onclick="toggle_hex(2,1);"><span id="hex_coords_2_1" style="position:absolute;left:24px;top:15px;">2,1</span></div></div><div id="2-2" style="position:absolute;z-index:6;left:172px;top:158px;"><div id="hex_2_2" class="hex_green" onclick="toggle_hex(2,2);"><span id="hex_coords_2_2" style="position:absolute;left:24px;top:15px;">2,2</span></div></div><div id="2-3" style="position:absolute;z-index:6;left:215px;top:177px;"><div id="hex_2_3" class="hex_green" onclick="toggle_hex(2,3);"><span id="hex_coords_2_3" style="position:absolute;left:24px;top:15px;">2,3</span></div></div><div id="2-4" style="position:absolute;z-index:6;left:258px;top:196px;"><div id="hex_2_4" class="hex_tree" onclick="toggle_hex(2,4);"><span id="hex_coords_2_4" style="position:absolute;left:24px;top:15px;">2,4</span></div></div><div id="2-5" style="position:absolute;z-index:6;left:301px;top:215px;"><div id="hex_2_5" class="hex_green" onclick="toggle_hex(2,5);"><span id="hex_coords_2_5" style="position:absolute;left:24px;top:15px;">2,5</span></div></div><div id="2-6" style="position:absolute;z-index:6;left:344px;top:234px;"><div id="hex_2_6" class="hex_green" onclick="toggle_hex(2,6);"><span id="hex_coords_2_6" style="position:absolute;left:24px;top:15px;">2,6</span></div></div><div id="2-7" style="position:absolute;z-index:6;left:387px;top:253px;"><div id="hex_2_7" class="hex_green" onclick="toggle_hex(2,7);"><span id="hex_coords_2_7" style="position:absolute;left:24px;top:15px;">2,7</span></div></div><div id="3-0" style="position:absolute;z-index:5;left:129px;top:100px;"><div id="hex_3_0" class="hex_tree" onclick="toggle_hex(3,0);"><span id="hex_coords_3_0" style="position:absolute;left:24px;top:15px;">3,0</span></div></div><div id="3-1" style="position:absolute;z-index:5;left:172px;top:119px;"><div id="hex_3_1" class="hex_tree" onclick="toggle_hex(3,1);"><span id="hex_coords_3_1" style="position:absolute;left:24px;top:15px;">3,1</span></div></div><div id="3-2" style="position:absolute;z-index:5;left:215px;top:138px;"><div id="hex_3_2" class="hex_tree" onclick="toggle_hex(3,2);"><span id="hex_coords_3_2" style="position:absolute;left:24px;top:15px;">3,2</span></div></div><div id="3-3" style="position:absolute;z-index:5;left:258px;top:157px;"><div id="hex_3_3" class="hex_tree" onclick="toggle_hex(3,3);"><span id="hex_coords_3_3" style="position:absolute;left:24px;top:15px;">3,3</span></div></div><div id="3-4" style="position:absolute;z-index:5;left:301px;top:176px;"><div id="hex_3_4" class="hex_green" onclick="toggle_hex(3,4);"><span id="hex_coords_3_4" style="position:absolute;left:24px;top:15px;">3,4</span></div></div><div id="3-5" style="position:absolute;z-index:5;left:344px;top:195px;"><div id="hex_3_5" class="hex_green" onclick="toggle_hex(3,5);"><span id="hex_coords_3_5" style="position:absolute;left:24px;top:15px;">3,5</span></div></div><div id="3-6" style="position:absolute;z-index:5;left:387px;top:214px;"><div id="hex_3_6" class="hex_green" onclick="toggle_hex(3,6);"><span id="hex_coords_3_6" style="position:absolute;left:24px;top:15px;">3,6</span></div></div><div id="3-7" style="position:absolute;z-index:5;left:430px;top:233px;"><div id="hex_3_7" class="hex_tree" onclick="toggle_hex(3,7);"><span id="hex_coords_3_7" style="position:absolute;left:24px;top:15px;">3,7</span></div></div><div id="4-0" style="position:absolute;z-index:4;left:172px;top:80px;"><div id="hex_4_0" class="hex_green" onclick="toggle_hex(4,0);"><span id="hex_coords_4_0" style="position:absolute;left:24px;top:15px;">4,0</span></div></div><div id="4-1" style="position:absolute;z-index:4;left:215px;top:99px;"><div id="hex_4_1" class="hex_green" onclick="toggle_hex(4,1);"><span id="hex_coords_4_1" style="position:absolute;left:24px;top:15px;">4,1</span></div></div><div id="4-2" style="position:absolute;z-index:4;left:258px;top:118px;"><div id="hex_4_2" class="hex_green" onclick="toggle_hex(4,2);"><span id="hex_coords_4_2" style="position:absolute;left:24px;top:15px;">4,2</span></div></div><div id="4-3" style="position:absolute;z-index:4;left:301px;top:137px;"><div id="hex_4_3" class="hex_green" onclick="toggle_hex(4,3);"><span id="hex_coords_4_3" style="position:absolute;left:24px;top:15px;">4,3</span></div></div><div id="4-4" style="position:absolute;z-index:4;left:344px;top:156px;"><div id="hex_4_4" class="hex_green" onclick="toggle_hex(4,4);"><span id="hex_coords_4_4" style="position:absolute;left:24px;top:15px;">4,4</span></div></div><div id="4-5" style="position:absolute;z-index:4;left:387px;top:175px;"><div id="hex_4_5" class="hex_green" onclick="toggle_hex(4,5);"><span id="hex_coords_4_5" style="position:absolute;left:24px;top:15px;">4,5</span></div></div><div id="4-6" style="position:absolute;z-index:4;left:430px;top:194px;"><div id="hex_4_6" class="hex_tree" onclick="toggle_hex(4,6);"><span id="hex_coords_4_6" style="position:absolute;left:24px;top:15px;">4,6</span></div></div><div id="4-7" style="position:absolute;z-index:4;left:473px;top:213px;"><div id="hex_4_7" class="hex_green" onclick="toggle_hex(4,7);"><span id="hex_coords_4_7" style="position:absolute;left:24px;top:15px;">4,7</span></div></div><div id="5-0" style="position:absolute;z-index:3;left:215px;top:60px;"><div id="hex_5_0" class="hex_green" onclick="toggle_hex(5,0);"><span id="hex_coords_5_0" style="position:absolute;left:24px;top:15px;">5,0</span></div></div><div id="5-1" style="position:absolute;z-index:3;left:258px;top:79px;"><div id="hex_5_1" class="hex_green" onclick="toggle_hex(5,1);"><span id="hex_coords_5_1" style="position:absolute;left:24px;top:15px;">5,1</span></div></div><div id="5-2" style="position:absolute;z-index:3;left:301px;top:98px;"><div id="hex_5_2" class="hex_green" onclick="toggle_hex(5,2);"><span id="hex_coords_5_2" style="position:absolute;left:24px;top:15px;">5,2</span></div></div><div id="5-3" style="position:absolute;z-index:3;left:344px;top:117px;"><div id="hex_5_3" class="hex_green" onclick="toggle_hex(5,3);"><span id="hex_coords_5_3" style="position:absolute;left:24px;top:15px;">5,3</span></div></div><div id="5-4" style="position:absolute;z-index:3;left:387px;top:136px;"><div id="hex_5_4" class="hex_green" onclick="toggle_hex(5,4);"><span id="hex_coords_5_4" style="position:absolute;left:24px;top:15px;">5,4</span></div></div><div id="5-5" style="position:absolute;z-index:3;left:430px;top:155px;"><div id="hex_5_5" class="hex_tree" onclick="toggle_hex(5,5);"><span id="hex_coords_5_5" style="position:absolute;left:24px;top:15px;">5,5</span></div></div><div id="5-6" style="position:absolute;z-index:3;left:473px;top:174px;"><div id="hex_5_6" class="hex_green" onclick="toggle_hex(5,6);"><span id="hex_coords_5_6" style="position:absolute;left:24px;top:15px;">5,6</span></div></div><div id="5-7" style="position:absolute;z-index:3;left:516px;top:193px;"><div id="hex_5_7" class="hex_green" onclick="toggle_hex(5,7);"><span id="hex_coords_5_7" style="position:absolute;left:24px;top:15px;">5,7</span></div></div><div id="6-0" style="position:absolute;z-index:2;left:258px;top:40px;"><div id="hex_6_0" class="hex_green" onclick="toggle_hex(6,0);"><span id="hex_coords_6_0" style="position:absolute;left:24px;top:15px;">6,0</span></div></div><div id="6-1" style="position:absolute;z-index:2;left:301px;top:59px;"><div id="hex_6_1" class="hex_green" onclick="toggle_hex(6,1);"><span id="hex_coords_6_1" style="position:absolute;left:24px;top:15px;">6,1</span></div></div><div id="6-2" style="position:absolute;z-index:2;left:344px;top:78px;"><div id="hex_6_2" class="hex_green" onclick="toggle_hex(6,2);"><span id="hex_coords_6_2" style="position:absolute;left:24px;top:15px;">6,2</span></div></div><div id="6-3" style="position:absolute;z-index:2;left:387px;top:97px;"><div id="hex_6_3" class="hex_green" onclick="toggle_hex(6,3);"><span id="hex_coords_6_3" style="position:absolute;left:24px;top:15px;">6,3</span></div></div><div id="6-4" style="position:absolute;z-index:2;left:430px;top:116px;"><div id="hex_6_4" class="hex_green" onclick="toggle_hex(6,4);"><span id="hex_coords_6_4" style="position:absolute;left:24px;top:15px;">6,4</span></div></div><div id="6-5" style="position:absolute;z-index:2;left:473px;top:135px;"><div id="hex_6_5" class="hex_green" onclick="toggle_hex(6,5);"><span id="hex_coords_6_5" style="position:absolute;left:24px;top:15px;">6,5</span></div></div><div id="6-6" style="position:absolute;z-index:2;left:516px;top:154px;"><div id="hex_6_6" class="hex_green" onclick="toggle_hex(6,6);"><span id="hex_coords_6_6" style="position:absolute;left:24px;top:15px;">6,6</span></div></div><div id="6-7" style="position:absolute;z-index:2;left:559px;top:173px;"><div id="hex_6_7" class="hex_green" onclick="toggle_hex(6,7);"><span id="hex_coords_6_7" style="position:absolute;left:24px;top:15px;">6,7</span></div></div><div id="7-0" style="position:absolute;z-index:1;left:301px;top:20px;"><div id="hex_7_0" class="hex_green" onclick="toggle_hex(7,0);"><span id="hex_coords_7_0" style="position:absolute;left:24px;top:15px;">7,0</span></div></div><div id="7-1" style="position:absolute;z-index:1;left:344px;top:39px;"><div id="hex_7_1" class="hex_green" onclick="toggle_hex(7,1);"><span id="hex_coords_7_1" style="position:absolute;left:24px;top:15px;">7,1</span></div></div><div id="7-2" style="position:absolute;z-index:1;left:387px;top:58px;"><div id="hex_7_2" class="hex_green" onclick="toggle_hex(7,2);"><span id="hex_coords_7_2" style="position:absolute;left:24px;top:15px;">7,2</span></div></div><div id="7-3" style="position:absolute;z-index:1;left:430px;top:77px;"><div id="hex_7_3" class="hex_green" onclick="toggle_hex(7,3);"><span id="hex_coords_7_3" style="position:absolute;left:24px;top:15px;">7,3</span></div></div><div id="7-4" style="position:absolute;z-index:1;left:473px;top:96px;"><div id="hex_7_4" class="hex_green" onclick="toggle_hex(7,4);"><span id="hex_coords_7_4" style="position:absolute;left:24px;top:15px;">7,4</span></div></div><div id="7-5" style="position:absolute;z-index:1;left:516px;top:115px;"><div id="hex_7_5" class="hex_green" onclick="toggle_hex(7,5);"><span id="hex_coords_7_5" style="position:absolute;left:24px;top:15px;">7,5</span></div></div><div id="7-6" style="position:absolute;z-index:1;left:559px;top:134px;"><div id="hex_7_6" class="hex_green" onclick="toggle_hex(7,6);"><span id="hex_coords_7_6" style="position:absolute;left:24px;top:15px;">7,6</span></div></div><div id="7-7" style="position:absolute;z-index:1;left:602px;top:153px;"><div id="hex_7_7" class="hex_green" onclick="toggle_hex(7,7);"><span id="hex_coords_7_7" style="position:absolute;left:24px;top:15px;">7,7</span></div></div></div>
+
+	<script>
+		draw_map();
+	</script>
+
+	
+<script type="text/javascript">
+// Google Analytics Stuff
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script src="Hexagon%20Map_files/ga.js" type="text/javascript"></script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-12584712-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>	
+	
+	
+</body></html>
