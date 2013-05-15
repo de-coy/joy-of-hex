@@ -109,14 +109,14 @@ function ThreeDeeHexGrid( grid ) {
 	
 	////MATERIALS
 	this.tileColor = 0x666666;
-	this.tileHiColor = 0x14C5FF;
+	this.tileHighlightColor = 0x14C5FF;
 
 	this.tileMaterial = new THREE.MeshPhongMaterial({
 		color : this.tileColor
 	})
 	
 	this.tileHighlightMaterial = new THREE.MeshPhongMaterial({
-		color : this.tileHiColor
+		color : this.tileHighlightColor
 	})
 
 	// create the grid geometry
@@ -124,13 +124,11 @@ function ThreeDeeHexGrid( grid ) {
 	    for(var j = 0; j < this.grid.nodes[ i ].length - 1; j++) {
 	        if( this.grid.visible[ i ][ j ] ) {
 	        	this.drawTile( i, j, this.grid.nodes[ i ][ j ][ 0 ], this.grid.nodes[ i ][ j ][ 1 ] );
-	        	
 	        }
 	    }
 	}
 	
 	//bind click events and link to pathfinder
-
 	document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 

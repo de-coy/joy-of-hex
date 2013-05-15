@@ -1,9 +1,7 @@
 function AStar (grid, start, finish) {
 	
 	var nodes = grid.nodes,
-		visible = grid.visible,
-		walkable = grid.walkable,
-		moveCostMultiplier = grid.moveCostMultiplier,
+		walkable = grid.visible,
 		
 		sortedFScores = [], // [f,x,y]
 		
@@ -25,36 +23,36 @@ function AStar (grid, start, finish) {
 		nodeScores = array2D( nodes.length, nodes[0].length, [0,0,0] ), // [f,g,h]
 		openList   = array2D( nodes.length, nodes[0].length, false ), // true or false
 		closedList = array2D( nodes.length, nodes[0].length, false ), // true or false
-		nodeParent = array2D( nodes.length, nodes[0].length, false ), // true or false
+		nodeParent = array2D( nodes.length, nodes[0].length, false ); // true or false
 		
-		edges = function (x,y) {
-			return [	[x,		y-1],
-						[x+1,	y  ],
-						[x+1,	y+1],
-						[x,		y+1],
-						[x-1,	y  ],
-						[x-1,	y-1]];
-		} 
-		
-		bridges = function (x,y) {
-			return [	[x-1,   y-2],
-						[x+1,	y-1],
-						[x+2,	y+1],
-						[x+1,   y+2],
-						[x-1,	y+1],
-						[x-2,	y+1]];
-		}
+	edges = function (x,y) {
+		return [	[x,		y-1],
+					[x+1,	y  ],
+					[x+1,	y+1],
+					[x,		y+1],
+					[x-1,	y  ],
+					[x-1,	y-1]];
+	} 
+	
+	bridges = function (x,y) {
+		return [	[x-1,   y-2],
+					[x+1,	y-1],
+					[x+2,	y+1],
+					[x+1,   y+2],
+					[x-1,	y+1],
+					[x-2,	y+1]];
+	}
 
 	
 	
 	// This JS implementation of A* is based on the following source:
 	// http://www.policyalmanac.org/games/aStarTutorial.htm
 	
-	if (!visible[sX][sY] || !visible[fX][fY] ) { console.error('Start or finish node is not visible.'); return false };
+	if (!walkable[sX][sY] || !walkable[fX][fY] ) { console.error('Start or finish node is not visible.'); return false };
 
 	// calculate F = G(distance from start) + H(estimated distance to finish)
 	h = heuristic(x,y,sX,sY,fX,fY);
-	g = nodeScores[x][y][1]; // * moveCostMultiplier[x][y];
+	g = nodeScores[x][y][1];
 	f = g + h;
 
 	addToOpenList(x,y,f,g,h);
@@ -82,7 +80,7 @@ function AStar (grid, start, finish) {
 			if ( nX >= 0 && nY >= 0 && walkable[nX][nY] && !closedList[nX][nY] ) {
 				
 				h = heuristic(nX,nY,sX,sY,fX,fY);
-				g = (nodeScores[nX][nY][1] + nodeScores[x][y][1]); // * moveCostMultiplier[nX][nY];
+				g = (nodeScores[nX][nY][1] + nodeScores[x][y][1]);
 				f = g + h;
 				
 				// if it is not on the open list then add it 
@@ -109,18 +107,24 @@ function AStar (grid, start, finish) {
 	path.unshift([fX,fY]);
 	
 	while ( !(stepX == sX && stepY == sY) ) {
+		
 		parent = nodeParent[stepX][stepY];
 		stepX = parent[0];
 		stepY = parent[1];
-		path.unshift([stepX,stepY]);
+		path.unshift( [ stepX, stepY ] );
+		
 	}
 	
 	path.unshift([sX,sY]);
 	
 	return path;
-
-
-
+	
+	
+	
+	
+	
+	
+	//////////HELPER FUNCTIONS FOLLOW
 
 
 
@@ -174,10 +178,10 @@ function AStar (grid, start, finish) {
 		
 		var array2D = [];
 		
-		for (var i = rows-1; i >= 0; i--) {
-			array2D[i] = [];
-			for (var j = columns-1; j >= 0; j--) {
-				array2D[i][j] = initialvalue;
+		for (var i = rows-1; i >= 0; i-- ) {
+			array2D[ i ] = [];
+			for ( var j = columns-1; j >= 0; j-- ) {
+				array2D[ i ][ j ] = initialvalue;
 			}
 		}
 		

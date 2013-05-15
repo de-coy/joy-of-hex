@@ -40,10 +40,9 @@ TileGrid = function ( tileGeometry, tileSpacing, width, height, drawfunction ) {
 		while ( i-- ) {
 			var x = this.nodeIds[i][0];
 			var y = this.nodeIds[i][1];
-	        if( this.visible[ x ][ y ] ) {
-	        	//drawfunction;
-	        }
 		}
+		
+		return this;
 
 
 };

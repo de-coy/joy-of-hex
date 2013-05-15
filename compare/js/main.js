@@ -136,7 +136,9 @@ $(document).ready(function() {
             // WEBGL
             webGL.highlightTile(j,k);
             
-            requestAnimationFrame(animate());
+            requestAnimationFrame(function(){
+            	animate()
+            });
 
         }
 

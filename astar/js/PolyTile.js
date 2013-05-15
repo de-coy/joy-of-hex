@@ -4,6 +4,7 @@
 
 PolyTile = function ( sides, radius, rotation, extrudeAmount ) {
 
+	// Polytile extends THREE.Shape
 	THREE.Shape.call( this );
 	
 	var sides = sides;

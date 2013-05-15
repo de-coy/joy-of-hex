@@ -23,25 +23,25 @@ function AStar (grid, start, finish) {
 		nodeScores = array2D( nodes.length, nodes[0].length, [0,0,0] ), // [f,g,h]
 		openList   = array2D( nodes.length, nodes[0].length, false ), // true or false
 		closedList = array2D( nodes.length, nodes[0].length, false ), // true or false
-		nodeParent = array2D( nodes.length, nodes[0].length, false ), // true or false
+		nodeParent = array2D( nodes.length, nodes[0].length, false ); // true or false
 		
-		edges = function (x,y) {
-			return [	[x,		y-1],
-						[x+1,	y  ],
-						[x+1,	y+1],
-						[x,		y+1],
-						[x-1,	y  ],
-						[x-1,	y-1]];
-		} 
-		
-		bridges = function (x,y) {
-			return [	[x-1,   y-2],
-						[x+1,	y-1],
-						[x+2,	y+1],
-						[x+1,   y+2],
-						[x-1,	y+1],
-						[x-2,	y+1]];
-		}
+	edges = function (x,y) {
+		return [	[x,		y-1],
+					[x+1,	y  ],
+					[x+1,	y+1],
+					[x,		y+1],
+					[x-1,	y  ],
+					[x-1,	y-1]];
+	} 
+	
+	bridges = function (x,y) {
+		return [	[x-1,   y-2],
+					[x+1,	y-1],
+					[x+2,	y+1],
+					[x+1,   y+2],
+					[x-1,	y+1],
+					[x-2,	y+1]];
+	}
 
 	
 	
@@ -178,7 +178,7 @@ function AStar (grid, start, finish) {
 		
 		var array2D = [];
 		
-		for  (var i = rows-1; i >= 0; i-- ) {
+		for (var i = rows-1; i >= 0; i-- ) {
 			array2D[ i ] = [];
 			for ( var j = columns-1; j >= 0; j-- ) {
 				array2D[ i ][ j ] = initialvalue;
