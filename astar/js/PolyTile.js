@@ -2,31 +2,28 @@
  * @author de.coy
  */
 
-PolyTile = function ( sides, radius, rotation, extrudeAmount ) {
+PolyTile = function ( tileOptions ) {
 
 	// Polytile extends THREE.Shape
 	THREE.Shape.call( this );
 	
-	var sides = sides;
-	
-	var outerRadius = radius;
+	var sides = tileOptions.sides;
+	var outerRadius = tileOptions.radius;
 	var innerRadius = Math.cos( 30 * (Math.PI/180) ) * outerRadius;
+	var rotation = tileOptions.rotation;
+	var extrudeAmount = tileOptions.extrudeAmount; 
 	
-	var rotation = rotation;
-	
-	var polygon = new RegularPolygon ( sides, radius, rotation );
-	
+	var polygon = new RegularPolygon ( sides, outerRadius, rotation );
 	var points = polygon.points();
-	
-	var i = points.length - 1;
-	
-	// if the points provided don't close the shape then copy the first point to the end and update 
-	if ( points[ 0 ] != points[ i ] ){ i = points.push( [ points[ 0 ][ 0 ],points[ 0 ][ 1 ] ] ) - 1; }
 
-	this.moveTo( points[ i ][ 0 ], points[ i ][ 1 ]);
-	while (i--) {
+	// Move to the last point in the 
+	this.moveTo( points[ points.length -1 ][ 0 ], points[ points.length -1 ][ 1 ]);
+	
+	var i = 0;
+	while (i < points.length) {
 		this.lineTo( points[ i ][ 0 ], points[ i ][ 1 ]);
-	}
+		i++;
+	} // while loop that imitaes a for loop is FAST see http://jsperf.com/loops/73
 	
 	var geometry = this.extrude( 	{	amount: extrudeAmount,
 										bevelEnabled: false		});
@@ -34,9 +31,9 @@ PolyTile = function ( sides, radius, rotation, extrudeAmount ) {
 		sides : sides,
 		outerRadius : outerRadius,
 		innerRadius : innerRadius,
-		rotation : rotation
+		rotation : rotation,
+		extrudeAmount : extrudeAmount
 	};
-	
 						
 	return geometry;
 

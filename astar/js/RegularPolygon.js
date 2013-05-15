@@ -7,19 +7,24 @@ function RegularPolygon (sides, radius, rotation) {
 	
 		theta = (360/numberOfSides)*(Math.PI/180),
 	
-		points = [];
+		points = [],
+		
+		i = 0;
 	
-	for (var i = numberOfSides; i > 0; i--) {
-		points[i-1] = [
-			Math.round((radius * Math.cos(theta * i))*100)/100,
-			Math.round((radius * Math.sin(theta * i))*100)/100
-		];
+	while ( i < numberOfSides ){
+	    points[i] = [
+            Math.round((radius * Math.cos(theta * i))*100)/100,
+            Math.round((radius * Math.sin(theta * i))*100)/100
+        ];
+        i++;
 	}
 	
 	if (rotation) {
-		for (var i = points.length; i > 0; i--) {
-			points[i-1] = rotatePoint(rotation,points[i-1])
-		}
+	    i = 0;
+	    while (i < points.length){
+	        points[i] = rotatePoint(rotation,points[i]);
+	        i++;
+	    }
 	}
 	
 	function rotatePoint(ang,pos) {

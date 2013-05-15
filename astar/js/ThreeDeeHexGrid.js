@@ -2,20 +2,20 @@
  * @author de.coy
  */
 
-function ThreeDeeHexGrid( grid ) {
+function ThreeDeeHexGrid() {
 	
 	
 	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 	
 	
 	//// PUBLIC
-	this.drawingArea = {
+	this.drawingAreaOptions = {
 					div: 'drawingarea',
 					width: window.innerWidth,
 					height: window.innerHeight
 			};
 				
-	this.tile = {
+	this.tileShapeOptions = {
 					sides: 6,
 					radius: 12,
 					height: null,
@@ -24,11 +24,11 @@ function ThreeDeeHexGrid( grid ) {
 					extrudeAmount: 4
 			};
 			
-	this.tile.height = Math.cos( 30 * (Math.PI/180) ) * this.tile.radius,
+	this.tileShapeOptions.height = Math.cos( 30 * (Math.PI/180) ) * this.tileShapeOptions.radius,
 	
 	this.viewingangle = 35,
 	this.camera,
-	this.cameraZpos = (this.drawingArea.width/2) / ( Math.tan( (this.viewingangle) * (Math.PI/180) ) ) * 1.35,
+	this.cameraZpos = (this.drawingAreaOptions.width/2) / ( Math.tan( (this.viewingangle) * (Math.PI/180) ) ) * 1.35,
 	
 	this.scene,
 	this.renderer,
@@ -36,8 +36,8 @@ function ThreeDeeHexGrid( grid ) {
 	this.meshes = [],
 	this.sprites = [],
 
-	this.tile = new PolyTile ( this.tile.sides, this.tile.radius, this.tile.rotation, this.tile.extrudeAmount ),
-	this.grid = new TileGrid( this.tile, 0, this.drawingArea.width, this.drawingArea.height, this.drawTile );
+	this.tile = new PolyTile ( this.tileShapeOptions ),
+	this.grid = new TileGrid( this.tile, 0, this.drawingAreaOptions.width, this.drawingAreaOptions.height, this.drawTile );
 
 
 	this.mouse = { x: -100, y: -100 },
@@ -58,13 +58,15 @@ function ThreeDeeHexGrid( grid ) {
 	this.fog = true,
 	this.gridRepair = true;
 	
+	
+	////PRVIATE
 	var that = this;
 	
 	
 	//SCENE & RENDERER
-	this.container = document.getElementById( this.drawingArea.div );
+	this.container = document.getElementById( this.drawingAreaOptions.div );
 	this.renderer = new THREE.WebGLRenderer( { antialias: false } );
-	this.renderer.setSize( this.drawingArea.width, this.drawingArea.height );
+	this.renderer.setSize( this.drawingAreaOptions.width, this.drawingAreaOptions.height );
 	this.container.appendChild( this.renderer.domElement );
 	
 	
@@ -93,16 +95,16 @@ function ThreeDeeHexGrid( grid ) {
 	this.scene.add( pointlight );	
 	
 	pointlight = new THREE.PointLight( 0xFFFFFF, 1, 2000 );
-	pointlight.position.x = this.drawingArea.width;
-	pointlight.position.y = this.drawingArea.height/2;
+	pointlight.position.x = this.drawingAreaOptions.width;
+	pointlight.position.y = this.drawingAreaOptions.height/2;
 	pointlight.position.z = 400;
 	this.scene.add( pointlight );
 	
 	
 	////CAMERA
-	this.camera = new THREE.PerspectiveCamera( this.viewingangle, this.drawingArea.width / this.drawingArea.height, 1, 10000 );
-	this.camera.position.x = (this.drawingArea.width / 2);
-	this.camera.position.y = -(this.drawingArea.height / 2);
+	this.camera = new THREE.PerspectiveCamera( this.viewingangle, this.drawingAreaOptions.width / this.drawingAreaOptions.height, 1, 10000 );
+	this.camera.position.x = (this.drawingAreaOptions.width / 2);
+	this.camera.position.y = -(this.drawingAreaOptions.height / 2);
 	this.camera.position.z = this.cameraZpos;
 	this.scene.add( this.camera );
 
