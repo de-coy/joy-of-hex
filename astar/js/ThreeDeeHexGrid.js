@@ -7,15 +7,14 @@ function ThreeDeeHexGrid() {
 	
 	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 	
-	
-	//// PUBLIC
-	this.drawingAreaOptions = {
+	////PRIVATE
+	var DRAWINGAREA = {
 					div: 'drawingarea',
 					width: window.innerWidth,
 					height: window.innerHeight
 			};
 				
-	this.tileShapeOptions = {
+	var TILESHAPE = {
 					sides: 6,
 					radius: 12,
 					height: null,
@@ -24,11 +23,10 @@ function ThreeDeeHexGrid() {
 					extrudeAmount: 4
 			};
 			
-	this.tileShapeOptions.height = Math.cos( 30 * (Math.PI/180) ) * this.tileShapeOptions.radius,
+	TILESHAPE.height = Math.cos( 30 * (Math.PI/180) ) * TILESHAPE.radius;
 	
-	this.viewingangle = 35,
-	this.camera,
-	this.cameraZpos = (this.drawingAreaOptions.width/2) / ( Math.tan( (this.viewingangle) * (Math.PI/180) ) ) * 1.35,
+	var CAMERAVIEWINGANGLE = 35;
+	var CAMERAZPOS = (DRAWINGAREA.width/2) / ( Math.tan( (CAMERAVIEWINGANGLE) * (Math.PI/180) ) ) * 1.35;
 	
 	this.scene,
 	this.renderer,
@@ -36,8 +34,8 @@ function ThreeDeeHexGrid() {
 	this.meshes = [],
 	this.sprites = [],
 
-	this.tile = new PolyTile ( this.tileShapeOptions ),
-	this.grid = new TileGrid( this.tile, 0, this.drawingAreaOptions.width, this.drawingAreaOptions.height, this.drawTile );
+	this.tile = new PolyTile ( TILESHAPE ),
+	this.grid = new TileGrid( this.tile, 0, DRAWINGAREA.width, DRAWINGAREA.height, this.drawTile );
 
 
 	this.mouse = { x: -100, y: -100 },
@@ -64,9 +62,9 @@ function ThreeDeeHexGrid() {
 	
 	
 	//SCENE & RENDERER
-	this.container = document.getElementById( this.drawingAreaOptions.div );
+	this.container = document.getElementById( DRAWINGAREA.div );
 	this.renderer = new THREE.WebGLRenderer( { antialias: false } );
-	this.renderer.setSize( this.drawingAreaOptions.width, this.drawingAreaOptions.height );
+	this.renderer.setSize( DRAWINGAREA.width, DRAWINGAREA.height );
 	this.container.appendChild( this.renderer.domElement );
 	
 	
@@ -81,7 +79,7 @@ function ThreeDeeHexGrid() {
 	}
 	
 	if (this.fog) {
-		this.scene.fog = new THREE.Fog ( 0x000000, 0, this.cameraZpos * 5 );
+		this.scene.fog = new THREE.Fog ( 0x000000, 0, CAMERAZPOS * 5 );
 	}
 	
 	
@@ -95,17 +93,17 @@ function ThreeDeeHexGrid() {
 	this.scene.add( pointlight );	
 	
 	pointlight = new THREE.PointLight( 0xFFFFFF, 1, 2000 );
-	pointlight.position.x = this.drawingAreaOptions.width;
-	pointlight.position.y = this.drawingAreaOptions.height/2;
+	pointlight.position.x = DRAWINGAREA.width;
+	pointlight.position.y = DRAWINGAREA.height/2;
 	pointlight.position.z = 400;
 	this.scene.add( pointlight );
 	
 	
 	////CAMERA
-	this.camera = new THREE.PerspectiveCamera( this.viewingangle, this.drawingAreaOptions.width / this.drawingAreaOptions.height, 1, 10000 );
-	this.camera.position.x = (this.drawingAreaOptions.width / 2);
-	this.camera.position.y = -(this.drawingAreaOptions.height / 2);
-	this.camera.position.z = this.cameraZpos;
+	this.camera = new THREE.PerspectiveCamera( CAMERAVIEWINGANGLE, DRAWINGAREA.width / DRAWINGAREA.height, 1, 10000 );
+	this.camera.position.x = (DRAWINGAREA.width / 2);
+	this.camera.position.y = -(DRAWINGAREA.height / 2);
+	this.camera.position.z = CAMERAZPOS;
 	this.scene.add( this.camera );
 
 	
@@ -167,12 +165,7 @@ function ThreeDeeHexGrid() {
 }
 
 
-
-ThreeDeeHexGrid.prototype = {
-
-
-	
-	drawTile : function ( i, j, x, y ) {
+ThreeDeeHexGrid.prototype.drawTile = function ( i, j, x, y ) {
 		
 		var mesh = new THREE.Mesh( this.tile, this.tileMaterial );
 		mesh.position.x = x;
@@ -184,26 +177,25 @@ ThreeDeeHexGrid.prototype = {
 		this.meshes[ i + '_' + j ] = mesh;
 		this.scene.add( this.meshes[ i + '_' + j ] );
 		
-	},
+	}
 
-	highlightTile : function ( mesh ) {
+ThreeDeeHexGrid.prototype.highlightTile = function ( mesh ) {
 		
 		mesh.materials[0] = this.tileHighlightMaterial;
 		
-	},
+	}
 
 
 
-	render : function () {
+ThreeDeeHexGrid.prototype.render = function () {
 	 
 		this.renderer.render( this.scene, this.camera );
 	
-	},
+	}
 
 
 
-	animate : function () {
-
+ThreeDeeHexGrid.prototype.animate = function () {
 		
 		if ( this.pathQueue.length > 1 ) {
 			
@@ -218,18 +210,13 @@ ThreeDeeHexGrid.prototype = {
 			
 		}
 
-
-
-
-
-
 		for ( mesh in this.meshes ) {
 			
 			if ( this.meshes[mesh].hit ) {
 				
 				this.meshes[mesh].materials[0] = this.tileHighlightMaterial;
 				
-				if ( this.gridRepair = true && this.meshes[mesh].position.z >= this.cameraZpos * 10000) {
+				if ( this.gridRepair = true && this.meshes[mesh].position.z >= this.camera.position.z * 10000) {
 					
 					this.meshes[mesh].hit = false;
 					this.meshes[mesh].lit = false;
@@ -285,8 +272,6 @@ ThreeDeeHexGrid.prototype = {
 		if (this.stats) { stats.update() };
 	
 	}
-	
-}
 
 
 

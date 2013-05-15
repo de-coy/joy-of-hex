@@ -2,13 +2,9 @@ function RegularPolygon (sides, radius, rotation) {
 	
 	var numberOfSides = sides || 6,
 		radius = radius || 10,
-		
 		rotation = rotation * (Math.PI/180),
-	
 		theta = (360/numberOfSides)*(Math.PI/180),
-	
 		points = [],
-		
 		i = 0;
 	
 	while ( i < numberOfSides ){
